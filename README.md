@@ -64,3 +64,9 @@ npm run lint -- --fix
 ```bash
 npm install
 ```
+
+## Tailwind CSS
+```bash
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init
+```
