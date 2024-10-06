@@ -29,37 +29,41 @@
           </button>
         </div>
 
-        <table class="min-w-full bg-white">
-          <thead>
-            <tr>
-              <th class="px-4 py-2 border">Tên Menu</th>
-              <th class="px-4 py-2 border">Chi Tiết</th>
-              <th class="px-4 py-2 border">Giá</th>
-              <th class="px-4 py-2 border">Hành Động</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in menus" :key="item.id">
-              <td class="px-4 py-2 border">{{ item.nameMenu }}</td>
-              <td class="px-4 py-2 border">{{ item.detail }}</td>
-              <td class="px-4 py-2 border">{{ item.price }} đ</td>
-              <td class="px-4 py-2 border text-center">
-                <button
-                  @click="editMenu(item)"
-                  class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                >
-                  Sửa
-                </button>
-                <button
-                  @click="confirmDeleteMenu(item.id)"
-                  class="ml-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                >
-                  Xóa
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="overflow-x-auto">
+          <table
+            class="min-w-full bg-white border border-gray-200 shadow-sm rounded-lg"
+          >
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="px-4 py-2 border text-left">Tên Menu</th>
+                <th class="px-4 py-2 border text-left">Chi Tiết</th>
+                <th class="px-4 py-2 border text-left">Giá</th>
+                <th class="px-4 py-2 border text-center">Hành Động</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in menus" :key="item.id" class="hover:bg-gray-50">
+                <td class="px-4 py-2 border">{{ item.nameMenu }}</td>
+                <td class="px-4 py-2 border">{{ item.detail }}</td>
+                <td class="px-4 py-2 border">{{ item.price }} đ</td>
+                <td class="px-4 py-2 border text-center">
+                  <button
+                    @click="editMenu(item)"
+                    class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                  >
+                    Sửa
+                  </button>
+                  <button
+                    @click="confirmDeleteMenu(item.id)"
+                    class="ml-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                  >
+                    Xóa
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Popup thêm/sửa menu -->
@@ -141,7 +145,6 @@
 import AppHeader from "./AppHeader.vue"; // Import header
 import AppFooter from "./AppFooter.vue"; // Import footer
 import Modal from "./ModalSection.vue"; // Sử dụng Modal.vue hiện tại
-import axios from "axios";
 
 export default {
   components: {
@@ -151,7 +154,27 @@ export default {
   },
   data() {
     return {
-      menus: [],
+      // Dữ liệu mẫu thay vì call API
+      menus: [
+        {
+          id: 1,
+          nameMenu: "Cơm Gà Xối Mỡ",
+          detail: "Ngon, giòn, bổ dưỡng",
+          price: 45000,
+        },
+        {
+          id: 2,
+          nameMenu: "Cơm Tấm Sườn",
+          detail: "Đậm đà, thơm ngon",
+          price: 50000,
+        },
+        {
+          id: 3,
+          nameMenu: "Cơm Chiên Dương Châu",
+          detail: "Đặc sản, bắt mắt",
+          price: 40000,
+        },
+      ],
       menu: {
         id: null,
         nameMenu: "",
@@ -165,14 +188,6 @@ export default {
     };
   },
   methods: {
-    async fetchMenus() {
-      try {
-        const response = await axios.get("/api/menus");
-        this.menus = response.data;
-      } catch (error) {
-        console.error("Error fetching menus:", error);
-      }
-    },
     openMenuModal() {
       this.resetForm();
       this.showMenuModal = true;
@@ -180,24 +195,19 @@ export default {
     closeMenuModal() {
       this.showMenuModal = false;
     },
-    async saveMenu() {
+    saveMenu() {
       if (this.editingMenu) {
-        try {
-          await axios.put(`/api/menus/${this.menu.id}`, this.menu);
-          this.fetchMenus();
-          this.closeMenuModal();
-        } catch (error) {
-          console.error("Error updating menu:", error);
-        }
+        // Update existing menu
+        const index = this.menus.findIndex((m) => m.id === this.menu.id);
+        this.menus.splice(index, 1, { ...this.menu });
       } else {
-        try {
-          await axios.post("/api/menus", this.menu);
-          this.fetchMenus();
-          this.closeMenuModal();
-        } catch (error) {
-          console.error("Error adding menu:", error);
-        }
+        // Add new menu
+        const newId = this.menus.length
+          ? this.menus[this.menus.length - 1].id + 1
+          : 1;
+        this.menus.push({ ...this.menu, id: newId });
       }
+      this.closeMenuModal();
     },
     editMenu(item) {
       this.menu = { ...item };
@@ -208,14 +218,9 @@ export default {
       this.deleteMenuId = id;
       this.showDeleteModal = true;
     },
-    async deleteMenu() {
-      try {
-        await axios.delete(`/api/menus/${this.deleteMenuId}`);
-        this.fetchMenus();
-        this.closeDeleteModal();
-      } catch (error) {
-        console.error("Error deleting menu:", error);
-      }
+    deleteMenu() {
+      this.menus = this.menus.filter((menu) => menu.id !== this.deleteMenuId);
+      this.closeDeleteModal();
     },
     closeDeleteModal() {
       this.showDeleteModal = false;
@@ -231,28 +236,5 @@ export default {
       this.editingMenu = false;
     },
   },
-  created() {
-    this.fetchMenus();
-  },
 };
 </script>
-
-<style scoped>
-/* Custom styles cho trang quản lý menu */
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-table th,
-table td {
-  padding: 10px;
-  text-align: left;
-  border: 1px solid #ddd;
-}
-
-table th {
-  background-color: #f3f4f6;
-  font-weight: bold;
-}
-</style>
